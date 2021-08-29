@@ -47,8 +47,6 @@ class NbuDOMDocumentGrabber extends DOMDocumentGrabber
             );
         }
 
-        \curl_close($ch);
-
         return $response;
     }
 

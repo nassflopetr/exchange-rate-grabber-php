@@ -17,7 +17,7 @@ class OschadBankDOMDocumentGrabber extends DOMDocumentGrabber
         }
 
         if (!\curl_setopt_array($ch, [
-                \CURLOPT_URL => 'https://www.oschadbank.ua/ua/private/currency',
+                \CURLOPT_URL => 'https://www.oschadbank.ua/currency-rate',
                 \CURLOPT_HEADER => false,
                 \CURLOPT_RETURNTRANSFER => true,
                 \CURLOPT_CONNECTTIMEOUT => 30,
@@ -41,14 +41,13 @@ class OschadBankDOMDocumentGrabber extends DOMDocumentGrabber
             );
         }
 
-        \curl_close($ch);
-
         return $response;
     }
 
     protected function getDOMNodeList(?string $response = null): \DOMNodeList
     {
-        $DOMXPathQuery = '//table[@id=\'currency_date_result\']/tbody/tr';
+        $DOMXPathQuery = '//table[contains(@class, \'heading-block-currency-rate__table\')]/'
+            . 'tbody[contains(@class, \'heading-block-currency-rate__table-body\')]/tr';
 
         $DOMNodeList = $this->getDOMDocumentDOMXPath($this->getDOMDocument($response))->query($DOMXPathQuery);
 
@@ -66,7 +65,7 @@ class OschadBankDOMDocumentGrabber extends DOMDocumentGrabber
 
     protected function getDestinationCurrencyCode(\DOMNode $DOMNode): string
     {
-        $DOMXPathQuery = 'td[1]';
+        $DOMXPathQuery = 'td[2]/span';
 
         $DOMNodeList = $this->getDOMNodeDOMXPath($DOMNode)->query($DOMXPathQuery, $DOMNode);
 
@@ -87,7 +86,7 @@ class OschadBankDOMDocumentGrabber extends DOMDocumentGrabber
 
     protected function getBuyRate(\DOMNode $DOMNode): float
     {
-        $DOMXPathQuery = 'td[6]';
+        $DOMXPathQuery = 'td[4]/span';
 
         $DOMNodeList = $this->getDOMNodeDOMXPath($DOMNode)->query($DOMXPathQuery, $DOMNode);
 
@@ -108,7 +107,7 @@ class OschadBankDOMDocumentGrabber extends DOMDocumentGrabber
 
     protected function getSaleRate(\DOMNode $DOMNode): float
     {
-        $DOMXPathQuery = 'td[7]';
+        $DOMXPathQuery = 'td[5]/span';
 
         $DOMNodeList = $this->getDOMNodeDOMXPath($DOMNode)->query($DOMXPathQuery, $DOMNode);
 
@@ -129,7 +128,7 @@ class OschadBankDOMDocumentGrabber extends DOMDocumentGrabber
 
     private function getUnit(\DOMNode $DOMNode): int
     {
-        $DOMXPathQuery = 'td[4]';
+        $DOMXPathQuery = 'td[3]/span';
 
         $DOMNodeList = $this->getDOMNodeDOMXPath($DOMNode)->query($DOMXPathQuery, $DOMNode);
 

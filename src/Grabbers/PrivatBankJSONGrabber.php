@@ -47,8 +47,6 @@ class PrivatBankJSONGrabber extends JSONGrabber
             );
         }
 
-        \curl_close($ch);
-
         return $response;
     }
 
