@@ -6,7 +6,7 @@ use NassFloPetr\ExchangeRateGrabber\Exceptions\SomethingWentChangedException;
 
 class UkrSibBankDOMDocumentGrabber extends DOMDocumentGrabber
 {
-    public function getResponse(): string
+    public function getCurlHandle(): \CurlHandle
     {
         $ch = \curl_init();
 
@@ -27,21 +27,7 @@ class UkrSibBankDOMDocumentGrabber extends DOMDocumentGrabber
             throw new \Exception(\curl_error($ch));
         }
 
-        $response = \curl_exec($ch);
-
-        if (!$response || \curl_errno($ch) !== 0) {
-            throw new \Exception(\curl_error($ch));
-        } elseif (\curl_getinfo($ch, \CURLINFO_RESPONSE_CODE) !== 200) {
-            throw new SomethingWentChangedException(
-                \sprintf(
-                    'Open %s stream failed. Response code %d.',
-                    \curl_getinfo($ch, \CURLINFO_EFFECTIVE_URL),
-                    \curl_getinfo($ch, \CURLINFO_HTTP_CODE)
-                )
-            );
-        }
-
-        return $response;
+        return $ch;
     }
 
     protected function getDOMNodeList(?string $response = null): \DOMNodeList
