@@ -4,6 +4,7 @@ namespace NassFloPetr\ExchangeRateGrabber\Grabbers;
 
 use NassFloPetr\ExchangeRateGrabber\Model\ExchangeRate;
 use NassFloPetr\ExchangeRateGrabber\Exceptions\ExchangeRateNotFoundException;
+use NassFloPetr\ExchangeRateGrabber\Exceptions\SomethingWentChangedException;
 
 abstract class Grabber
 {
@@ -17,9 +18,17 @@ abstract class Grabber
 
         $response = \curl_exec($ch);
 
-        if (!$response || \curl_errno($ch) !== 0) {
-            throw new \Exception(\curl_error($ch));
-        } elseif (\curl_getinfo($ch, \CURLINFO_RESPONSE_CODE) !== 200) {
+        if (!$response || \curl_errno($ch) !== \CURLE_OK) {
+            throw new \Exception(
+                \sprintf(
+                    'Open %s stream failed. %s.',
+                    \curl_getinfo($ch, \CURLINFO_EFFECTIVE_URL),
+                    \curl_error($ch)
+                )
+            );
+        }
+
+        if (\curl_getinfo($ch, \CURLINFO_RESPONSE_CODE) !== 200) {
             throw new SomethingWentChangedException(
                 \sprintf(
                     'Open %s stream failed. Response code %d.',
