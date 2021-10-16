@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types = 1);
 
 namespace NassFloPetr\ExchangeRateGrabber\Model;
 
@@ -22,8 +24,7 @@ class ExchangeRate
         ?float $buyRate = null,
         ?float $saleRate = null,
         ?\DateTime $timestamp = null,
-        array $observers = [],
-        bool $notifyExchangeRateCreated = true
+        array $observers = []
     )
     {
         if (!\class_exists($grabberClassName) || !\is_subclass_of($grabberClassName, Grabber::class)) {
@@ -49,6 +50,50 @@ class ExchangeRate
 
         $this->observers = [];
 
+        $this->attachObservers($observers);
+
+        if (\is_null($buyRate) || \is_null($saleRate)) {
+            $latestExchangeRate = $this->getGrabber()->getExchangeRate(
+                $this->getBaseCurrencyCode(),
+                $this->getDestinationCurrencyCode()
+            );
+
+            $buyRate = $latestExchangeRate->getBuyRate();
+            $saleRate = $latestExchangeRate->getSaleRate();
+            $timestamp = $latestExchangeRate->getTimestamp();
+        }
+
+        $this->setExchangeRate($buyRate, $saleRate, $timestamp);
+    }
+
+    public function __serialize(): array
+    {
+        return [
+            'grabber_class_name' => $this->grabberClassName,
+            'base_currency_code' => $this->baseCurrencyCode,
+            'destination_currency_code' => $this->destinationCurrencyCode,
+            'buy_rate' => $this->buyRate,
+            'sale_rate' => $this->saleRate,
+            'timestamp' => \serialize($this->timestamp),
+            'observers_class_names' => \array_keys($this->observers),
+        ];
+    }
+
+    public function __unserialize(array $data): void
+    {
+        $this->__construct(
+            $data['grabber_class_name'],
+            $data['base_currency_code'],
+            $data['destination_currency_code'],
+            $data['buy_rate'],
+            $data['sale_rate'],
+            \unserialize($data['timestamp'], ['allowed_classes' => [\DateTime::class]]),
+            $data['observers_class_names']
+        );
+    }
+
+    public function attachObservers(array $observers): void
+    {
         foreach ($observers as $observer) {
             if (!\is_string($observer) && !\is_object($observer)) {
                 throw new \TypeError();
@@ -83,64 +128,48 @@ class ExchangeRate
                 $this->observers[\get_class($observer)] = $observer;
             }
         }
+    }
 
-        if (\is_null($buyRate) || \is_null($saleRate)) {
-            $latestExchangeRate = $this->getGrabber()->getExchangeRate(
-                $this->getBaseCurrencyCode(),
-                $this->getDestinationCurrencyCode()
-            );
+    public function detachObservers(?array $observers = null): void
+    {
+        if (\is_null($observers)) {
+            $this->observers = [];
+        } else {
+            foreach ($observers as $observer) {
+                if (!\is_string($observer) && !\is_object($observer)) {
+                    throw new \TypeError();
+                }
 
-            $buyRate = $latestExchangeRate->getBuyRate();
-            $saleRate = $latestExchangeRate->getSaleRate();
-            $timestamp = $latestExchangeRate->getTimestamp();
+                if (\is_string($observer)) {
+                    if (
+                        !\class_exists($observer)
+                        || !\is_subclass_of($observer, ExchangeRateObserver::class)
+                    ) {
+                        throw new \ValueError(
+                            \sprintf(
+                                '%s is not instance of %s class.',
+                                $observer,
+                                ExchangeRateObserver::class
+                            )
+                        );
+                    }
+
+                    unset($this->observers[$observer]);
+                } else {
+                    if (!($observer instanceof ExchangeRateObserver)) {
+                        throw new \ValueError(
+                            \sprintf(
+                                '%s object is not instance of %s class.',
+                                \get_class($observer),
+                                ExchangeRateObserver::class
+                            )
+                        );
+                    }
+
+                    unset($this->observers[\get_class($observer)]);
+                }
+            }
         }
-
-        $this->setExchangeRate(
-            $buyRate,
-            $saleRate,
-            $timestamp
-        );
-
-        if ($notifyExchangeRateCreated) {
-            $this->notifyExchangeRateCreated();
-        }
-    }
-
-    public function __serialize(): array
-    {
-        return [
-            'grabber_class_name' => $this->grabberClassName,
-            'base_currency_code' => $this->baseCurrencyCode,
-            'destination_currency_code' => $this->destinationCurrencyCode,
-            'buy_rate' => $this->buyRate,
-            'sale_rate' => $this->saleRate,
-            'timestamp' => \serialize($this->timestamp),
-            'observers_class_names' => \array_keys($this->observers),
-        ];
-    }
-
-    public function __unserialize(array $data): void
-    {
-        $this->__construct(
-            $data['grabber_class_name'],
-            $data['base_currency_code'],
-            $data['destination_currency_code'],
-            $data['buy_rate'],
-            $data['sale_rate'],
-            \unserialize($data['timestamp'], ['allowed_classes' => [\DateTime::class]]),
-            $data['observers_class_names'],
-            false
-        );
-    }
-
-    public function attach(ExchangeRateObserver $observer): void
-    {
-        $this->observers[\get_class($observer)] = $observer;
-    }
-
-    public function detach(ExchangeRateObserver $observer): void
-    {
-        unset($this->observers[\get_class($observer)]);
     }
 
     public function notifyExchangeRateCreated(): void
