@@ -4,7 +4,7 @@ declare(strict_types = 1);
 
 namespace NassFloPetr\ExchangeRateGrabber\Grabbers;
 
-use NassFloPetr\ExchangeRateGrabber\Exceptions\SomethingWentChangedException;
+use NassFloPetr\ExchangeRateGrabber\Exceptions\SomethingWentChanged;
 
 class UkrGasBankDOMDocumentGrabber extends DOMDocumentGrabber
 {
@@ -40,7 +40,7 @@ class UkrGasBankDOMDocumentGrabber extends DOMDocumentGrabber
         $DOMNodeList = $this->getDOMDocumentDOMXPath($this->getDOMDocument($response))->query($DOMXPathQuery);
 
         if (!$DOMNodeList || $DOMNodeList->length === 0) {
-            throw new SomethingWentChangedException(\sprintf('%s was not found.', $DOMXPathQuery));
+            throw new SomethingWentChanged(\sprintf('%s was not found.', $DOMXPathQuery));
         }
 
         return $DOMNodeList;
@@ -58,7 +58,7 @@ class UkrGasBankDOMDocumentGrabber extends DOMDocumentGrabber
         $DOMNodeList = $this->getDOMNodeDOMXPath($DOMNode)->query($DOMXPathQuery, $DOMNode);
 
         if (!$DOMNodeList || $DOMNodeList->length !== 1) {
-            throw new SomethingWentChangedException(
+            throw new SomethingWentChanged(
                 \sprintf('%s (responsible for destination currency code) was not found.', $DOMXPathQuery)
             );
         }
@@ -68,7 +68,7 @@ class UkrGasBankDOMDocumentGrabber extends DOMDocumentGrabber
         $count = \sscanf($DOMAttr->value, 'icon icon-%s', $currencyCode);
 
         if ($count === 0) {
-            throw new SomethingWentChangedException(
+            throw new SomethingWentChanged(
                 \sprintf('%s (responsible for destination currency code) was not found.', $DOMXPathQuery)
             );
         }
@@ -76,7 +76,7 @@ class UkrGasBankDOMDocumentGrabber extends DOMDocumentGrabber
         $result = \strtoupper(\trim($currencyCode));
 
         if (!\preg_match('/^[A-Z]{3}$/', $result)) {
-            throw new SomethingWentChangedException('Destination currency code is invalid.');
+            throw new SomethingWentChanged('Destination currency code is invalid.');
         }
 
         return $result;
@@ -89,7 +89,7 @@ class UkrGasBankDOMDocumentGrabber extends DOMDocumentGrabber
         $DOMNodeList = $this->getDOMNodeDOMXPath($DOMNode)->query($DOMXPathQuery, $DOMNode);
 
         if (!$DOMNodeList || $DOMNodeList->length !== 1) {
-            throw new SomethingWentChangedException(
+            throw new SomethingWentChanged(
                 \sprintf('%s (responsible for buy rate) was not found.', $DOMXPathQuery)
             );
         }
@@ -97,7 +97,7 @@ class UkrGasBankDOMDocumentGrabber extends DOMDocumentGrabber
         $result = \trim($DOMNodeList->item(0)->nodeValue);
 
         if (!\is_numeric($result)) {
-            throw new SomethingWentChangedException('Buy rate is invalid.');
+            throw new SomethingWentChanged('Buy rate is invalid.');
         }
 
         return (float) ($result / $this->getUnit($DOMNode));
@@ -110,7 +110,7 @@ class UkrGasBankDOMDocumentGrabber extends DOMDocumentGrabber
         $DOMNodeList = $this->getDOMNodeDOMXPath($DOMNode)->query($DOMXPathQuery, $DOMNode);
 
         if (!$DOMNodeList || $DOMNodeList->length !== 1) {
-            throw new SomethingWentChangedException(
+            throw new SomethingWentChanged(
                 \sprintf('%s (responsible for sale rate) element was not found.', $DOMXPathQuery)
             );
         }
@@ -118,7 +118,7 @@ class UkrGasBankDOMDocumentGrabber extends DOMDocumentGrabber
         $result = \trim($DOMNodeList->item(0)->nodeValue);
 
         if (!\is_numeric($result)) {
-            throw new SomethingWentChangedException('Sale rate is invalid.');
+            throw new SomethingWentChanged('Sale rate is invalid.');
         }
 
         return (float) ($result / $this->getUnit($DOMNode));
@@ -131,7 +131,7 @@ class UkrGasBankDOMDocumentGrabber extends DOMDocumentGrabber
         $DOMNodeList = $this->getDOMNodeDOMXPath($DOMNode)->query($DOMXPathQuery, $DOMNode);
 
         if (!$DOMNodeList || $DOMNodeList->length !== 1) {
-            throw new SomethingWentChangedException(
+            throw new SomethingWentChanged(
                 \sprintf('%s (responsible for unit) was not found.', $DOMXPathQuery)
             );
         }
@@ -141,11 +141,11 @@ class UkrGasBankDOMDocumentGrabber extends DOMDocumentGrabber
         $count = \sscanf(\trim($DOMNodeList->item(0)->nodeValue), '%D', $unit);
 
         if ($count === 0) {
-            throw new SomethingWentChangedException(
+            throw new SomethingWentChanged(
                 \sprintf('%s (responsible for unit) was not found.', $DOMXPathQuery)
             );
         } elseif (!\is_numeric($unit)) {
-            throw new SomethingWentChangedException('Unit is invalid.');
+            throw new SomethingWentChanged('Unit is invalid.');
         }
 
         return (int) $unit;

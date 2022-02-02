@@ -5,7 +5,7 @@ declare(strict_types = 1);
 namespace NassFloPetr\ExchangeRateGrabber\Grabbers;
 
 use NassFloPetr\ExchangeRateGrabber\Model\ExchangeRate;
-use NassFloPetr\ExchangeRateGrabber\Exceptions\SomethingWentChangedException;
+use NassFloPetr\ExchangeRateGrabber\Exceptions\SomethingWentChanged;
 
 abstract class JSONGrabber extends Grabber
 {
@@ -43,7 +43,7 @@ abstract class JSONGrabber extends Grabber
         try {
             return \json_decode($response, true, 512, \JSON_THROW_ON_ERROR);
         } catch (\JsonException $e) {
-            throw new SomethingWentChangedException('JSON decoding failed. ' . $e->getMessage());
+            throw new SomethingWentChanged('JSON decoding failed. ' . $e->getMessage());
         }
     }
 }

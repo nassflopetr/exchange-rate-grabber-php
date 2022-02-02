@@ -4,7 +4,7 @@ declare(strict_types = 1);
 
 namespace NassFloPetr\ExchangeRateGrabber\Grabbers;
 
-use NassFloPetr\ExchangeRateGrabber\Exceptions\SomethingWentChangedException;
+use NassFloPetr\ExchangeRateGrabber\Exceptions\SomethingWentChanged;
 
 class UkrSibBankDOMDocumentGrabber extends DOMDocumentGrabber
 {
@@ -40,7 +40,7 @@ class UkrSibBankDOMDocumentGrabber extends DOMDocumentGrabber
         $DOMNodeList = $this->getDOMDocumentDOMXPath($this->getDOMDocument($response))->query($DOMXPathQuery);
 
         if (!$DOMNodeList || $DOMNodeList->length === 0) {
-            throw new SomethingWentChangedException(\sprintf('%s was not found.', $DOMXPathQuery));
+            throw new SomethingWentChanged(\sprintf('%s was not found.', $DOMXPathQuery));
         }
 
         return $DOMNodeList;
@@ -58,7 +58,7 @@ class UkrSibBankDOMDocumentGrabber extends DOMDocumentGrabber
         $DOMNodeList = $this->getDOMNodeDOMXPath($DOMNode)->query($DOMXPathQuery, $DOMNode);
 
         if (!$DOMNodeList || $DOMNodeList->length === 0) {
-            throw new SomethingWentChangedException(
+            throw new SomethingWentChanged(
                 \sprintf('%s (responsible for destination currency code) was not found.', $DOMXPathQuery)
             );
         }
@@ -68,7 +68,7 @@ class UkrSibBankDOMDocumentGrabber extends DOMDocumentGrabber
         );
 
         if (!\preg_match('/^[A-Z]{3}$/', $result)) {
-            throw new SomethingWentChangedException('Destination currency code is invalid.');
+            throw new SomethingWentChanged('Destination currency code is invalid.');
         }
 
         return $result;
@@ -81,7 +81,7 @@ class UkrSibBankDOMDocumentGrabber extends DOMDocumentGrabber
         $DOMNodeList = $this->getDOMNodeDOMXPath($DOMNode)->query($DOMXPathQuery, $DOMNode);
 
         if (!$DOMNodeList || $DOMNodeList->length === 0) {
-            throw new SomethingWentChangedException(
+            throw new SomethingWentChanged(
                 \sprintf('%s (responsible for buy rate) was not found.', $DOMXPathQuery)
             );
         }
@@ -89,7 +89,7 @@ class UkrSibBankDOMDocumentGrabber extends DOMDocumentGrabber
         $result = \trim($DOMNodeList->item(0)->textContent);
 
         if (!\is_numeric($result)) {
-            throw new SomethingWentChangedException('Buy rate is invalid.');
+            throw new SomethingWentChanged('Buy rate is invalid.');
         }
 
         return (float) $result;
@@ -102,7 +102,7 @@ class UkrSibBankDOMDocumentGrabber extends DOMDocumentGrabber
         $DOMNodeList = $this->getDOMNodeDOMXPath($DOMNode)->query($DOMXPathQuery, $DOMNode);
 
         if (!$DOMNodeList || $DOMNodeList->length === 0) {
-            throw new SomethingWentChangedException(
+            throw new SomethingWentChanged(
                 \sprintf('%s (responsible for sale rate) was not found.', $DOMXPathQuery)
             );
         }
@@ -110,7 +110,7 @@ class UkrSibBankDOMDocumentGrabber extends DOMDocumentGrabber
         $result = \trim($DOMNodeList->item(0)->textContent);
 
         if (!\is_numeric($result)) {
-            throw new SomethingWentChangedException('Sale rate is invalid.');
+            throw new SomethingWentChanged('Sale rate is invalid.');
         }
 
         return (float) $result;

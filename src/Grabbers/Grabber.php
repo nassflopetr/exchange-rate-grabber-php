@@ -5,8 +5,6 @@ declare(strict_types = 1);
 namespace NassFloPetr\ExchangeRateGrabber\Grabbers;
 
 use NassFloPetr\ExchangeRateGrabber\Model\ExchangeRate;
-use NassFloPetr\ExchangeRateGrabber\Exceptions\ExchangeRateNotFoundException;
-use NassFloPetr\ExchangeRateGrabber\Exceptions\SomethingWentChangedException;
 
 abstract class Grabber
 {
@@ -14,9 +12,11 @@ abstract class Grabber
 
     abstract public function getExchangeRates(?string $response = null): iterable;
 
-    public function getResponse(): string
+    public function getResponse(?\CurlHandle $ch = null): string
     {
-        $ch = $this->getCurlHandle();
+        if(\is_null($ch)) {
+            $ch = $this->getCurlHandle();
+        }
 
         $response = \curl_exec($ch);
 
@@ -31,7 +31,7 @@ abstract class Grabber
         }
 
         if (\curl_getinfo($ch, \CURLINFO_RESPONSE_CODE) !== 200) {
-            throw new SomethingWentChangedException(
+            throw new \Exception(
                 \sprintf(
                     'Open %s stream failed. Response code %d.',
                     \curl_getinfo($ch, \CURLINFO_EFFECTIVE_URL),
@@ -47,7 +47,7 @@ abstract class Grabber
         string $baseCurrencyCode,
         string $destinationCurrencyCode,
         ?string $response = null
-    ): ExchangeRate
+    ): ?ExchangeRate
     {
         foreach ($this->getExchangeRates($response) as $exchangeRate) {
             if (
@@ -58,13 +58,6 @@ abstract class Grabber
             }
         }
 
-        throw new ExchangeRateNotFoundException(
-            \sprintf(
-                '%s can\'t find exchange rate for base %s and destination %s currency codes.',
-                static::class,
-                $baseCurrencyCode,
-                $destinationCurrencyCode
-            )
-        );
+        return null;
     }
 }

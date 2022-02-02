@@ -92,6 +92,19 @@ class ExchangeRate
         );
     }
 
+    public function __clone(): void
+    {
+        $this->__construct(
+            $this->grabberClassName,
+            $this->baseCurrencyCode,
+            $this->destinationCurrencyCode,
+            $this->buyRate,
+            $this->saleRate,
+            $this->timestamp,
+            $this->observers
+        );
+    }
+
     public function attachObservers(array $observers): void
     {
         foreach ($observers as $observer) {
@@ -195,7 +208,6 @@ class ExchangeRate
 
     public function updateExchangeRate(float $buyRate, float $saleRate, ?\DateTime $timestamp = null): void
     {
-        // TODO: check clone
         $preExchangeRate = clone $this;
 
         $this->setExchangeRate($buyRate, $saleRate, $timestamp);

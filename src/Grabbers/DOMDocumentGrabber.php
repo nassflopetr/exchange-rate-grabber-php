@@ -5,7 +5,7 @@ declare(strict_types = 1);
 namespace NassFloPetr\ExchangeRateGrabber\Grabbers;
 
 use NassFloPetr\ExchangeRateGrabber\Model\ExchangeRate;
-use NassFloPetr\ExchangeRateGrabber\Exceptions\SomethingWentChangedException;
+use NassFloPetr\ExchangeRateGrabber\Exceptions\SomethingWentChanged;
 
 abstract class DOMDocumentGrabber extends Grabber
 {
@@ -48,13 +48,13 @@ abstract class DOMDocumentGrabber extends Grabber
             if (!$DOMDocument) {
                 $error = \libxml_get_last_error();
 
-                throw new SomethingWentChangedException(
+                throw new SomethingWentChanged(
                     ($error instanceof \libXMLError) ? \serialize($error) : 'Can\'t create DOMDocument object.'
                 );
             }
         } catch (\Exception $e) {
             if ($e->getSeverity() !== \E_WARNING) {
-                throw new SomethingWentChangedException($e->getMessage());
+                throw new SomethingWentChanged($e->getMessage());
             }
         }
 

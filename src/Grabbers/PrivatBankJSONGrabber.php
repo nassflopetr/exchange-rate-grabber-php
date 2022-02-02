@@ -4,7 +4,7 @@ declare(strict_types = 1);
 
 namespace NassFloPetr\ExchangeRateGrabber\Grabbers;
 
-use NassFloPetr\ExchangeRateGrabber\Exceptions\SomethingWentChangedException;
+use NassFloPetr\ExchangeRateGrabber\Exceptions\SomethingWentChanged;
 
 class PrivatBankJSONGrabber extends JSONGrabber
 {
@@ -47,13 +47,13 @@ class PrivatBankJSONGrabber extends JSONGrabber
     protected function getBaseCurrencyCode(array $decodedJSONItem): string
     {
         if (!\array_key_exists('base_ccy', $decodedJSONItem)) {
-            throw new SomethingWentChangedException('No key \'base_ccy\' found in array (json) structure.');
+            throw new SomethingWentChanged('No key \'base_ccy\' found in array (json) structure.');
         }
 
         $result = \trim($decodedJSONItem['base_ccy']);
 
         if (!\preg_match('/^[A-Z]{3}$/', $result)) {
-            throw new SomethingWentChangedException('Base currency code is invalid.');
+            throw new SomethingWentChanged('Base currency code is invalid.');
         }
 
         return $result;
@@ -62,13 +62,13 @@ class PrivatBankJSONGrabber extends JSONGrabber
     protected function getDestinationCurrencyCode(array $decodedJSONItem): string
     {
         if (!\array_key_exists('ccy', $decodedJSONItem)) {
-            throw new SomethingWentChangedException('No key \'ccy\' found in array (json) structure.');
+            throw new SomethingWentChanged('No key \'ccy\' found in array (json) structure.');
         }
 
         $result = \trim($decodedJSONItem['ccy']);
 
         if (!\preg_match('/^[A-Z]{3}$/', $result)) {
-            throw new SomethingWentChangedException('Destination currency code is invalid.');
+            throw new SomethingWentChanged('Destination currency code is invalid.');
         }
 
         return $result;
@@ -77,13 +77,13 @@ class PrivatBankJSONGrabber extends JSONGrabber
     protected function getBuyRate(array $decodedJSONItem): float
     {
         if (!\array_key_exists('buy', $decodedJSONItem)) {
-            throw new SomethingWentChangedException('No key \'buy\' found in array (json) structure.');
+            throw new SomethingWentChanged('No key \'buy\' found in array (json) structure.');
         }
 
         $result = \trim($decodedJSONItem['buy']);
 
         if (!\is_numeric($result)) {
-            throw new SomethingWentChangedException('Buy rate is invalid.');
+            throw new SomethingWentChanged('Buy rate is invalid.');
         }
 
         return (float) $result;
@@ -92,13 +92,13 @@ class PrivatBankJSONGrabber extends JSONGrabber
     protected function getSaleRate(array $decodedJSONItem): float
     {
         if (!\array_key_exists('sale', $decodedJSONItem)) {
-            throw new SomethingWentChangedException('No key \'sale\' found in array (json) structure.');
+            throw new SomethingWentChanged('No key \'sale\' found in array (json) structure.');
         }
 
         $result = \trim($decodedJSONItem['sale']);
 
         if (!\is_numeric($result)) {
-            throw new SomethingWentChangedException('Sale rate is invalid.');
+            throw new SomethingWentChanged('Sale rate is invalid.');
         }
 
         return (float) $result;

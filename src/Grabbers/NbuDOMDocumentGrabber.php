@@ -4,7 +4,7 @@ declare(strict_types = 1);
 
 namespace NassFloPetr\ExchangeRateGrabber\Grabbers;
 
-use NassFloPetr\ExchangeRateGrabber\Exceptions\SomethingWentChangedException;
+use NassFloPetr\ExchangeRateGrabber\Exceptions\SomethingWentChanged;
 
 class NbuDOMDocumentGrabber extends DOMDocumentGrabber
 {
@@ -46,7 +46,7 @@ class NbuDOMDocumentGrabber extends DOMDocumentGrabber
         $DOMNodeList = $this->getDOMDocumentDOMXPath($this->getDOMDocument($response))->query($DOMXPathQuery);
 
         if (!$DOMNodeList || $DOMNodeList->length === 0) {
-            throw new SomethingWentChangedException(\sprintf('%s was not found.', $DOMXPathQuery));
+            throw new SomethingWentChanged(\sprintf('%s was not found.', $DOMXPathQuery));
         }
 
         return $DOMNodeList;
@@ -64,7 +64,7 @@ class NbuDOMDocumentGrabber extends DOMDocumentGrabber
         $DOMNodeList = $this->getDOMNodeDOMXPath($DOMNode)->query($DOMXPathQuery, $DOMNode);
 
         if (!$DOMNodeList || $DOMNodeList->length === 0) {
-            throw new SomethingWentChangedException(
+            throw new SomethingWentChanged(
                 \sprintf('%s (responsible for destination currency code) was not found.', $DOMXPathQuery)
             );
         }
@@ -72,7 +72,7 @@ class NbuDOMDocumentGrabber extends DOMDocumentGrabber
         $result = \trim($DOMNodeList->item(0)->nodeValue);
 
         if (!\preg_match('/^[A-Z]{3}$/', $result)) {
-            throw new SomethingWentChangedException('Destination currency code is invalid.');
+            throw new SomethingWentChanged('Destination currency code is invalid.');
         }
 
         return $result;
@@ -85,7 +85,7 @@ class NbuDOMDocumentGrabber extends DOMDocumentGrabber
         $DOMNodeList = $this->getDOMNodeDOMXPath($DOMNode)->query($DOMXPathQuery, $DOMNode);
 
         if (!$DOMNodeList || $DOMNodeList->length === 0) {
-            throw new SomethingWentChangedException(
+            throw new SomethingWentChanged(
                 \sprintf('%s (responsible for buy (sale) rate) was not found.', $DOMXPathQuery)
             );
         }
@@ -93,7 +93,7 @@ class NbuDOMDocumentGrabber extends DOMDocumentGrabber
         $result = \str_replace(',', '.', \trim($DOMNodeList->item(0)->nodeValue));
 
         if (!\is_numeric($result)) {
-            throw new SomethingWentChangedException('Buy (sale) rate is invalid.');
+            throw new SomethingWentChanged('Buy (sale) rate is invalid.');
         }
 
         return (float) ($result / $this->getUnit($DOMNode));
@@ -111,7 +111,7 @@ class NbuDOMDocumentGrabber extends DOMDocumentGrabber
         $DOMNodeList = $this->getDOMNodeDOMXPath($DOMNode)->query($DOMXPathQuery, $DOMNode);
 
         if (!$DOMNodeList || $DOMNodeList->length === 0) {
-            throw new SomethingWentChangedException(
+            throw new SomethingWentChanged(
                 \sprintf('%s (responsible for unit) was not found.', $DOMXPathQuery)
             );
         }
@@ -119,7 +119,7 @@ class NbuDOMDocumentGrabber extends DOMDocumentGrabber
         $result = \trim($DOMNodeList->item(0)->nodeValue);
 
         if (!\is_numeric($result)) {
-            throw new SomethingWentChangedException('Unit is invalid.');
+            throw new SomethingWentChanged('Unit is invalid.');
         }
 
         return (int) $result;
