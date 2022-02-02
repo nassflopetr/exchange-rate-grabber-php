@@ -25,6 +25,7 @@ class UkrSibBankDOMDocumentGrabber extends DOMDocumentGrabber
                 \CURLOPT_CONNECTTIMEOUT => 30,
                 \CURLOPT_TIMEOUT => 30,
                 \CURLOPT_FRESH_CONNECT => true,
+                \CURLOPT_ENCODING => '',
             ])
         ) {
             throw new \Exception(\curl_error($ch));
