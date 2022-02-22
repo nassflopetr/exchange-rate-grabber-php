@@ -1,12 +1,12 @@
 <?php
 
-declare(strict_types = 1);
+declare(strict_types=1);
 
 namespace NassFloPetr\ExchangeRateGrabber\Grabbers;
 
-use NassFloPetr\ExchangeRateGrabber\Exceptions\SomethingWentChanged;
+use NassFloPetr\Grabber\Exceptions\SomethingWentChanged;
 
-class NbuDOMDocumentGrabber extends DOMDocumentGrabber
+class UkrGasBankDOMDocumentWebGrabber extends DOMDocumentWebGrabber
 {
     public function getCurlHandle(): \CurlHandle
     {
@@ -19,13 +19,7 @@ class NbuDOMDocumentGrabber extends DOMDocumentGrabber
         }
 
         if (!\curl_setopt_array($ch, [
-                \CURLOPT_URL => 'https://bank.gov.ua/ua/markets/exchangerates?' . \http_build_query(
-                    [
-                        'date' => (new \DateTime())->setTimezone(new \DateTimeZone('Europe/Kiev'))
-                            ->format('d.m.Y'),
-                        'period' => 'daily',
-                    ]
-                ),
+                \CURLOPT_URL => 'https://www.ukrgasbank.com/kurs/',
                 \CURLOPT_HEADER => false,
                 \CURLOPT_RETURNTRANSFER => true,
                 \CURLOPT_CONNECTTIMEOUT => 30,
@@ -42,7 +36,7 @@ class NbuDOMDocumentGrabber extends DOMDocumentGrabber
 
     protected function getDOMNodeList(?string $response = null): \DOMNodeList
     {
-        $DOMXPathQuery = '//table[@id=\'exchangeRates\']/tbody/tr';
+        $DOMXPathQuery = '//div[contains(@class, \'kurs\') and contains(@class, \'kurs-full\')]/table/tr[td]';
 
         $DOMNodeList = $this->getDOMDocumentDOMXPath($this->getDOMDocument($response))->query($DOMXPathQuery);
 
@@ -60,17 +54,27 @@ class NbuDOMDocumentGrabber extends DOMDocumentGrabber
 
     protected function getDestinationCurrencyCode(\DOMNode $DOMNode): string
     {
-        $DOMXPathQuery = 'td[2]';
+        $DOMXPathQuery = 'td[1][contains(@class, \'icon\')]';
 
         $DOMNodeList = $this->getDOMNodeDOMXPath($DOMNode)->query($DOMXPathQuery, $DOMNode);
 
-        if (!$DOMNodeList || $DOMNodeList->length === 0) {
+        if (!$DOMNodeList || $DOMNodeList->length !== 1) {
             throw new SomethingWentChanged(
                 \sprintf('%s (responsible for destination currency code) was not found.', $DOMXPathQuery)
             );
         }
 
-        $result = \trim($DOMNodeList->item(0)->nodeValue);
+        $DOMAttr = $DOMNodeList->item(0)->attributes->getNamedItem('class');
+
+        $count = \sscanf($DOMAttr->value, 'icon icon-%s', $currencyCode);
+
+        if ($count === 0) {
+            throw new SomethingWentChanged(
+                \sprintf('%s (responsible for destination currency code) was not found.', $DOMXPathQuery)
+            );
+        }
+
+        $result = \strtoupper(\trim($currencyCode));
 
         if (!\preg_match('/^[A-Z]{3}$/', $result)) {
             throw new SomethingWentChanged('Destination currency code is invalid.');
@@ -81,20 +85,20 @@ class NbuDOMDocumentGrabber extends DOMDocumentGrabber
 
     protected function getBuyRate(\DOMNode $DOMNode): float
     {
-        $DOMXPathQuery = 'td[5]';
+        $DOMXPathQuery = 'td[3]';
 
         $DOMNodeList = $this->getDOMNodeDOMXPath($DOMNode)->query($DOMXPathQuery, $DOMNode);
 
-        if (!$DOMNodeList || $DOMNodeList->length === 0) {
+        if (!$DOMNodeList || $DOMNodeList->length !== 1) {
             throw new SomethingWentChanged(
-                \sprintf('%s (responsible for buy (sale) rate) was not found.', $DOMXPathQuery)
+                \sprintf('%s (responsible for buy rate) was not found.', $DOMXPathQuery)
             );
         }
 
-        $result = \str_replace(',', '.', \trim($DOMNodeList->item(0)->nodeValue));
+        $result = \trim($DOMNodeList->item(0)->nodeValue);
 
         if (!\is_numeric($result)) {
-            throw new SomethingWentChanged('Buy (sale) rate is invalid.');
+            throw new SomethingWentChanged('Buy rate is invalid.');
         }
 
         return (float) ($result / $this->getUnit($DOMNode));
@@ -102,27 +106,49 @@ class NbuDOMDocumentGrabber extends DOMDocumentGrabber
 
     protected function getSaleRate(\DOMNode $DOMNode): float
     {
-        return $this->getBuyRate($DOMNode);
-    }
-
-    private function getUnit(\DOMNode $DOMNode): int
-    {
-        $DOMXPathQuery = 'td[3]';
+        $DOMXPathQuery = 'td[4]';
 
         $DOMNodeList = $this->getDOMNodeDOMXPath($DOMNode)->query($DOMXPathQuery, $DOMNode);
 
-        if (!$DOMNodeList || $DOMNodeList->length === 0) {
+        if (!$DOMNodeList || $DOMNodeList->length !== 1) {
             throw new SomethingWentChanged(
-                \sprintf('%s (responsible for unit) was not found.', $DOMXPathQuery)
+                \sprintf('%s (responsible for sale rate) element was not found.', $DOMXPathQuery)
             );
         }
 
         $result = \trim($DOMNodeList->item(0)->nodeValue);
 
         if (!\is_numeric($result)) {
+            throw new SomethingWentChanged('Sale rate is invalid.');
+        }
+
+        return (float) ($result / $this->getUnit($DOMNode));
+    }
+
+    private function getUnit(\DOMNode $DOMNode): int
+    {
+        $DOMXPathQuery = 'td[2]';
+
+        $DOMNodeList = $this->getDOMNodeDOMXPath($DOMNode)->query($DOMXPathQuery, $DOMNode);
+
+        if (!$DOMNodeList || $DOMNodeList->length !== 1) {
+            throw new SomethingWentChanged(
+                \sprintf('%s (responsible for unit) was not found.', $DOMXPathQuery)
+            );
+        }
+
+        $DOMAttr = $DOMNodeList->item(0)->attributes->getNamedItem('class');
+
+        $count = \sscanf(\trim($DOMNodeList->item(0)->nodeValue), '%D', $unit);
+
+        if ($count === 0) {
+            throw new SomethingWentChanged(
+                \sprintf('%s (responsible for unit) was not found.', $DOMXPathQuery)
+            );
+        } elseif (!\is_numeric($unit)) {
             throw new SomethingWentChanged('Unit is invalid.');
         }
 
-        return (int) $result;
+        return (int) $unit;
     }
 }

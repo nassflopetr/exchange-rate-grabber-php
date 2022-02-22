@@ -14,7 +14,8 @@
         "php": ">=8.0",
         "ext-dom": "*",
         "ext-curl": "*",
-        "ext-libxml": "*"
+        "ext-libxml": "*",
+        "nassflopetr/grabber-php": "dev-master"
     },
     "autoload": {
         "psr-4": {

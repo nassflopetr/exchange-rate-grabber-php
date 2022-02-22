@@ -1,12 +1,12 @@
 <?php
 
-declare(strict_types = 1);
+declare(strict_types=1);
 
 namespace NassFloPetr\ExchangeRateGrabber\Grabbers;
 
-use NassFloPetr\ExchangeRateGrabber\Exceptions\SomethingWentChanged;
+use NassFloPetr\Grabber\Exceptions\SomethingWentChanged;
 
-class PrivatBankJSONGrabber extends JSONGrabber
+class PrivatBankJSONWebGrabber extends JSONWebGrabber
 {
     public function getCurlHandle(): \CurlHandle
     {
